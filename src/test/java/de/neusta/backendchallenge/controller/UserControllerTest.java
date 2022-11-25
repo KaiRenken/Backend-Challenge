@@ -1,6 +1,8 @@
 package de.neusta.backendchallenge.controller;
 
 import de.neusta.backendchallenge.domain.Raum;
+import de.neusta.backendchallenge.service.Exception.InvalidNumberFormatException;
+import de.neusta.backendchallenge.service.Exception.RoomAlreadyExistsException;
 import de.neusta.backendchallenge.service.RoomService;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -9,14 +11,20 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class UserControllerTest {
 
-    private final UserController userController = new UserController(new RoomService());
+    private final RoomService roomService = mock(RoomService.class); // RoomService wird gemockt
+
+    private final UserController userController = new UserController(roomService); // Mock wird injected (wir wollen ja hier nur den UserController und nicht den RoomService testen ;-)
 
     @Test
     void importDocumentNull() throws IOException {
@@ -42,7 +50,11 @@ class UserControllerTest {
     @Test
     void importDocumentWrongRoomNr() throws IOException {
         MultipartFile multipartFile = new MockMultipartFile("sitzplanWrongRaumNr.csv", new FileInputStream("src/main/resources/sitzplanWrongRaumNr.csv"));
+
+        when(roomService.saveRoom(any())).thenThrow(new InvalidNumberFormatException()); // Da der RoomService nur noch ein Mock ist, müssen wir dem Mock sagen, was zu tun ist, wenn er aufgerufen wird.
+
         ResponseEntity<Object> response = userController.importDocument(multipartFile);
+
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         ErrorDto errorDto = (ErrorDto) response.getBody();
         assertThat(errorDto).isNotNull();
@@ -53,7 +65,11 @@ class UserControllerTest {
     @Test
     void importDocumentRoomAlreadyExists() throws IOException {
         MultipartFile multipartFile = new MockMultipartFile("sitzplanAlreadyExists.csv", new FileInputStream("src/main/resources/sitzplanAlreadyExists.csv"));
+
+        when(roomService.saveRoom(any())).thenThrow(new RoomAlreadyExistsException()); // Da der RoomService nur noch ein Mock ist, müssen wir dem Mock sagen, was zu tun ist, wenn er aufgerufen wird.
+
         ResponseEntity<Object> response = userController.importDocument(multipartFile);
+
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         ErrorDto errorDto = (ErrorDto) response.getBody();
         assertThat(errorDto).isNotNull();

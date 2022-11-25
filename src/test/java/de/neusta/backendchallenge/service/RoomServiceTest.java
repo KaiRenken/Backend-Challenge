@@ -1,22 +1,24 @@
 package de.neusta.backendchallenge.service;
 
+import de.neusta.backendchallenge.domain.Person;
 import de.neusta.backendchallenge.domain.Raum;
 import de.neusta.backendchallenge.service.Exception.InvalidNumberFormatException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-class RaumServiceTest {
+class RoomServiceTest {
 
-    private RoomService roomService;
+    private final PersonHandler personHandler = mock(PersonHandler.class); // Der PersonHandler wird gemockt
 
-    @BeforeEach
-    void setup() {
-        roomService = new RoomService();
-    }
+    private final RoomService roomService = new RoomService(personHandler); // Im Test können wir die zu testende Klasse einfach direkt erzeugen. Außerdem müssen wir hier jetzt den Mock für den PersonHandler injecten.
 
     @Test
     void saveRum() {
@@ -32,7 +34,16 @@ class RaumServiceTest {
     @Test
     void getRoomsAfterImport() {
         String content = "1111,Dennis Fischer (dfischer),Dr. Frank von Supper (fsupper),Susanne Moog (smoog),";
+
+        // Wir müssen dem Mock sagen, was er tun soll, wenn er ausgerufen wird
+        when(personHandler.extractPersons(any())).thenReturn(List.of(
+                new Person("Dennis", "Fischer", "", "", "dfischer"),
+                new Person("Frank", "Supper", "Dr.", "von", "fsupper"),
+                new Person("Susanne", "Moog", "", "", "smoog")
+        ));
+
         roomService.saveRoom(content);
+
         List<Raum> response = roomService.getRooms();
         assertEquals(1, response.size());
         assertEquals(3, response.get(0).getPeople().size());

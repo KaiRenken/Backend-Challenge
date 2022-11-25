@@ -1,14 +1,18 @@
 package de.neusta.backendchallenge.service;
 
 import de.neusta.backendchallenge.domain.Person;
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Component // Auch hier als Spring Bean annotieren, um dependency injection per Spring Boot zu ermöglichen!
 public class PersonParser {
 
     public Person parse(String userInfo) {
         String[] splittetUserInfo = userInfo.trim().split(" ");
+
         if (splittetUserInfo.length == 1 && splittetUserInfo[0].equals("")) {
             return new Person("", "", "", "", "");
         }
@@ -20,6 +24,7 @@ public class PersonParser {
         List<String> infoSplit = new ArrayList<>(Arrays.asList(splittetUserInfo));
 
         String ldapUser = infoSplit.get(infoSplit.size() - 1);
+
         if (!(ldapUser.endsWith(")") && ldapUser.startsWith("("))) {
             throw new IllegalArgumentException(("Person is not complete"));
         }
@@ -31,6 +36,7 @@ public class PersonParser {
         infoSplit.remove(infoSplit.size() - 1);
 
         String titel;
+
         if (infoSplit.get(0).contains(".")) {
             if (!infoSplit.get(0).equals("Dr.")) {
                 throw new IllegalArgumentException("Title is not correct");
@@ -42,11 +48,12 @@ public class PersonParser {
             titel = "";
         }
 
-        if (infoSplit.isEmpty()){
+        if (infoSplit.isEmpty()) {
             throw new IllegalArgumentException("Person is not complete");
         }
 
         String nameAddition = constructNameAddition(infoSplit.get(infoSplit.size() - 1));
+
         if (!nameAddition.equals("")) {
             infoSplit.remove(infoSplit.size() - 1);
         }
@@ -57,6 +64,7 @@ public class PersonParser {
             firstName.append(" ").append(name);
             firstName = new StringBuilder(firstName.toString().trim());
         }
+
         return new Person(firstName.toString(), lastName, titel, nameAddition, ldapUser);
     }
 
@@ -64,6 +72,7 @@ public class PersonParser {
         if (s.equals("von") || s.equals("de") || s.equals("van")) {
             return s;
         }
+
         return "";
     }
 }
